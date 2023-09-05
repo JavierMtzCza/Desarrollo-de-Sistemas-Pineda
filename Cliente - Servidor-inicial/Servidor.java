@@ -8,7 +8,7 @@ public class Servidor {
 
    public static void main(String[] args) throws IOException {
 
-      ServerSocket servidor = new ServerSocket(5000);
+      ServerSocket servidor = new ServerSocket(50000);
 
       System.out.println("Iniciando servidor en el puerto 5000");
 
