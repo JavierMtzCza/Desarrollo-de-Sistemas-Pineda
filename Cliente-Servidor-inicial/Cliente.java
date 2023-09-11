@@ -10,7 +10,7 @@ public class Cliente {
 
       // Creamos una instancia de Socket que tiene como argumentos
       // Socket(DIRECCION_DEL_SERVIDOR, PUERTO)
-      Socket conexion = new Socket("localhost", 5000);
+      Socket conexion = new Socket("localhost", 50000);
 
       // Creamos un Stream de salida y entrada
       DataOutputStream salida = new DataOutputStream(conexion.getOutputStream());
