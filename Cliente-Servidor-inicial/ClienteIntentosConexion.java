@@ -1,7 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
+import java.net.Socket; 
 
 public class ClienteIntentosConexion {
    public static void main(String[] args) throws InterruptedException, IOException {
@@ -29,7 +29,7 @@ public class ClienteIntentosConexion {
       byte[] buffer = new byte[4];
       //Usamos la funcion de lectura con el DataInput entrada
       //el buffere creadp. la posicion 0 y longitud igual a la cadena que queremos enviar 
-      Utils.read(entrada, buffer, 0, 4);
+      Utilidad.read(entrada, buffer, 0, 4);
       //El buffer con el mensaje lo convertimos a una instancia de String con codificacion UTF-8
       System.out.println(new String(buffer, "UTF-8"));
 

@@ -1,7 +1,7 @@
 import java.io.DataInputStream;
 import java.io.IOException;
 
-public class Utils {
+public class Utilidad {
 
    public static void read(DataInputStream f, byte[] b, int posicion, int longitud) throws IOException {
       
