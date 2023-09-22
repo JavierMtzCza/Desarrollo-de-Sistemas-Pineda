@@ -1,0 +1,52 @@
+import java.io.*;
+import java.net.*;
+
+public class ServidorA {
+    public static void main(String[] args) throws Exception {
+
+        ServerSocket serverSocket = new ServerSocket(50000);
+        System.out.println("ServidorTCP escuchando en el puerto 50000...");
+
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+            Thread clientThread = new ClientThread(clientSocket);
+            clientThread.start();
+        }
+    }
+}
+
+class ClientThread extends Thread {
+    private Socket clientSocket;
+
+    public ClientThread(Socket socket) {
+        this.clientSocket = socket;
+    }
+
+    @Override
+    public void run() {
+        try {
+            DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
+            long NUMERO = inputStream.readLong();
+            long NUMERO_INICIAL = inputStream.readLong();
+            long NUMERO_FINAL = inputStream.readLong();
+
+            String response = divide(NUMERO, NUMERO_INICIAL, NUMERO_FINAL);
+
+            DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
+            outputStream.writeUTF(response);
+
+            clientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String divide(long NUMERO, long NUMERO_INICIAL, long NUMERO_FINAL) {
+        for (long n = NUMERO_INICIAL; n <= NUMERO_FINAL; n++) {
+            if (NUMERO % n == 0) {
+                return "DIVIDE";
+            }
+        }
+        return "NO DIVIDE";
+    }
+}

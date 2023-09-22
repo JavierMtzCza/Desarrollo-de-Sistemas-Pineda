@@ -1,0 +1,16 @@
+Desde ahora actuaras como un programador en Java, debes hacer dos programas, ambos son servidores que se comunicaran entre ellos y seran ejecutados en maquinas virtuales creadas en Azure, especificamente el ServidorHTTP(1 servidor) mandara peticiones a los ServidorTCP (3 servidores en total), estos son los programas:
+
+1. Desarrollar un servidor TCP (con nombre "ServidorTCP") multithread, el cual recibira tres numeros enteros de 64 bits (NUMERO, NUMERO_INICIAL y NUMERO_FINAL). Este debera dividir el NUMERO entre cada numero "n" desde NUMERO_INICIAL hasta NUMERO_FINAL, si hay un numero "n" que divide a NUMERO, entonces el ServidorTCP regresara al cliente la palabra "DIVIDE", de otra manera regresara al cliente "NO DIVIDE". Se sugiere utilizar el operador modulo % para determinar si un numero "n" divide a NUMERO, esto es: Si (NUMERO%n)==0 entonces "n" divide a NUMERO. 
+El servidor debera abrir el puerto 50000, y al enviar el mensaje al cliente, debera hacerlo con DataInputStream.
+
+2.Desarrollar un servidor HTTP (con nombre "ServidorHTTP"), el cual brindara el servicio de determinar si un numero entero (mayor que 1) es primo o no. 
+Utilizando un navegador web se enviara al ServidorHTTP un numero entero de la siguiente manera: 
+- http://IP_maquina/NUMERO 
+Por ejemplo: 
+- http://ip-maquina/1234567811 
+El servidor debe validar si el numero enviado es un entero, si es asi entonces se ejcutara el codigo, sino mandara un 404 al cliente.
+El ServidorHTTP debera utilizar la cache del navegador para guardar los resultados de peticiones previas, por tanto, el ServidorHTTP debera enviar al navegador en cada respuesta el encabezado Last-Modified, y procesar el encabezado If-Modified-Since que le envie el navegador. 
+Para determinar si "NUMERO" es primo, el ServidorHTTP dividira el intervalo [2,"NUMERO"/2] en tres intervalos, entonces el ServidorHTTP. Este servidor enviara a cada instancia del ServidorTCP (programa anterior), el NUMERO y el intervalo [NOMERO_INICIAL, NUMERO_FINAL] correspondiente. 
+Si las tres instancias del ServidorTCP regresan "NO DIVIDE" al ServidorHTTP, entonces el ServidorHTTP regresara al navegador las palabras "ES PRIMO". Si alguna instancia del ServidorTCP regresa "DIVIDE", entonces el ServidorHTTP regresara al navegador las palabras "NO ES PRIMO". 
+Este servidor debe abrir en el puerto 80, dentro de el habra una clase interna "Worker", la cual tendra el metodo "run()" (metodo que ejecutan los hilos) y debera heredear de "Thread". 
+Deberas implementar una funcion con toda la logica sobre las peticiones a ServidorTCP, esta funcion debera regresar "Es Primo" o "No es primo" una vez teniendo las respuesas de los servidoresTCP, ademas deberas hacerlo de forma que se pueda modificar la ip a la que le haces las peticiones a ServidorTCP.

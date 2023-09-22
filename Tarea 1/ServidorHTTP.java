@@ -1,0 +1,126 @@
+import java.io.*;
+import java.net.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class ServidorHTTP {
+    public static void main(String[] args) throws Exception {
+
+        ServerSocket serverSocket = new ServerSocket(80);
+        System.out.println("ServidorHTTP escuchando en el puerto 80...");
+
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+             Thread clientThread = new ClientThread(clientSocket);
+            clientThread.start();
+        }
+    }
+}
+
+class ClientThread extends Thread {
+    private Socket clientSocket;
+    private SimpleDateFormat dateFormat;
+
+    public ClientThread(Socket socket) {
+        this.clientSocket = socket;
+        this.dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+        this.dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
+
+    @Override
+    public void run() {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            String requestLine = reader.readLine();
+
+            // Verificar si la solicitud es válida y contiene un número en la URL
+            if (isValidRequest(requestLine)) {
+                String[] requestParts = requestLine.split(" ");
+                String requestURI = requestParts[1];
+                String[] uriParts = requestURI.split("/");
+
+                long NUMERO = Long.parseLong(uriParts[1]);
+                String response = isPrime(NUMERO);
+
+                PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
+                writer.println("HTTP/1.1 200 OK");
+                writer.println("Content-Type: text/html");
+                Date now = new Date();
+                writer.println("Date: " + dateFormat.format(now));
+                writer.println("Last-Modified: " + dateFormat.format(now)); // Enviar la fecha actual como Last-Modified
+                writer.println();
+                writer.println("<html><span>" + response + "</span</html>");
+            } else {
+                // Si la solicitud no es válida, puede ignorarla o responder con un mensaje de
+                // error
+                PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
+                writer.println("HTTP/1.1 400 Bad Request");
+                writer.println("Content-Type: text/plain");
+                writer.println();
+                writer.println("Solicitud no válida.");
+            }
+
+            clientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isValidRequest(String requestLine) {
+        if (requestLine != null && requestLine.startsWith("GET")) {
+            String[] requestParts = requestLine.split(" ");
+            if (requestParts.length == 3) {
+                String requestURI = requestParts[1];
+                String[] uriParts = requestURI.split("/");
+                if (uriParts.length == 2) {
+                    try {
+                        Long.parseLong(uriParts[1]); // Intentar convertir la parte de la URL en un número
+                        return true;
+                    } catch (NumberFormatException e) {
+                        // La parte de la URL no es un número válido
+                        return false;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private String isPrime(long NUMERO) {
+        // Dividir el intervalo [2, NUMERO/2] en tres partes y enviarlas a los
+        // servidores TCP
+        long mid = NUMERO / 2;
+        long part1 = 2;
+        long part2 = mid / 2;
+        long part3 = mid + 1;
+
+        String result1 = requestServerTCP("172.178.82.39", NUMERO, part1, part2);
+        String result2 = requestServerTCP("20.102.119.6", NUMERO, part2 + 1, mid);
+        String result3 = requestServerTCP("20.102.119.33", NUMERO, part3, NUMERO / 2);
+
+        if (result1.equals("NO DIVIDE") && result2.equals("NO DIVIDE") && result3.equals("NO DIVIDE")) {
+            return "ES PRIMO";
+        } else {
+            return "NO ES PRIMO";
+        }
+    }
+
+    private String requestServerTCP(String IP, long NUMERO, long NUMERO_INICIAL, long NUMERO_FINAL) {
+        try {
+            Socket tcpSocket = new Socket(IP, 50000);
+            DataOutputStream outputStream = new DataOutputStream(tcpSocket.getOutputStream());
+            outputStream.writeLong(NUMERO);
+            outputStream.writeLong(NUMERO_INICIAL);
+            outputStream.writeLong(NUMERO_FINAL);
+
+            DataInputStream inputStream = new DataInputStream(tcpSocket.getInputStream());
+            String response = inputStream.readUTF();
+
+            tcpSocket.close();
+            return response;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "ERROR";
+        }
+    }
+}
