@@ -1,0 +1,38 @@
+En esta tarea se deberá desarrollar un solo programa en Java el cual calculará el producto de dos matrices rectangulares en forma distribuida utilizando tres máquinas virtuales de Azure.
+
+Sean A y B matrices rectangulares con elementos de tipo double, la dimensión de la matriz A es N renglones y M columnas, y la dimensión de la matriz B es M renglones y N columnas.
+Sea C=AxB matriz cuadrada con N renglones y N columnas.
+
+*Se deberá inicializar las matrices de la siguiente manera:
+A[i][j]= 5*i-2*j
+B[i][j] = 6*i+3*j
+
+Donde A[i][j] y B[i][j] son los elementos Ai,j y Bi,j respectivamente.
+El programa deberá ejecutar en tres máquinas virtuales con Ubuntu (nodos 1, 2 y 3).
+
+¿Cómo realizar la multiplicación de matrices en forma distribuida? Sea BT la transpuesta de la matriz B. Se deberá dividir las matrices A y BT en seis partes de igual tamaño, por tanto la matriz C estará dividida en 36 partes Debido a que las matrices se guardan por renglones en la memoria, para aprovechar la localidad espacial el producto se realizará renglón por renglón.
+
+El nodo 1 realizará lo siguiente:
+1.Inicializará las matrices A y B.
+2.Obtendrá la transpuesta de la matriz B.
+3.Enviará las matrices Ai y BTj al nodo 2 (solo enviará las matrices necesarias para realizar los productos C1 al C18).
+4.Enviará las matrices Ai y BTj al nodo 3 (solo enviará las matrices necesarias para realizar los productos C19 al C36).
+5.Recibirá del nodo 2 las matrices C1 a la C18.
+6.Recibirá del nodo 3 las matrices C19 a la C36.
+7.Obtendrá la matriz C a partir de las matrices C1 a la C36.
+8.Calculará y desplegará el checksum de la matriz C.
+9.Desplegará las matrices A, B y C para el caso N=6, M=5.
+
+El nodo 2 realizará lo siguiente:
+
+1.Recibirá las matrices Ai y BTj del nodo 1 (solo recibirá las matrices necesarias para realizar los productos C1 al C18).
+2.Calculará los productos C1 al C18.
+3.Enviará las matrices C1 a la C18 al nodo 1.
+
+El nodo 3 realizará lo siguiente:
+
+1.Recibirá las matrices Ai y BTj del nodo 1 (solo recibirá las matrices necesarias para realizar los productos C19 al C36).
+2.Calculará los productos C19 al C36.
+3.Enviará las matrices C19 a la C36 al nodo 1.
+
+Muestrame el codigo del nodo 1,2 y 3 en un solo programa, Se deberá pasar el número de nodo como parámetro al programa. Se debe hacer en Java y con servidores TCP.

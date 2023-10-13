@@ -1,7 +1,6 @@
 import java.io.DataInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import javax.net.ssl.SSLServerSocketFactory;
 
 public class ServidorSSL {
@@ -15,14 +14,10 @@ public class ServidorSSL {
 
         public void run() {
             try {
-                DataInputStream entrada = new DataInputStream(socket.getInputStream());
-                System.out.println(entrada.readInt());
                 socket.close();
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -32,7 +27,7 @@ public class ServidorSSL {
         System.setProperty("javax.net.ssl.keyStorePassword", "123456");
 
         SSLServerSocketFactory socketFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-        ServerSocket serverSocket = socketFactory.createServerSocket(8443);
+        ServerSocket serverSocket = socketFactory.createServerSocket(50000);
 
         while (true) {
             Socket conexion = serverSocket.accept();

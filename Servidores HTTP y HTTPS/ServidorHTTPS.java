@@ -3,9 +3,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocketFactory;
 
 public class ServidorHTTPS {
 
@@ -23,14 +21,6 @@ public class ServidorHTTPS {
 
                 String req = entrada.readLine();
                 System.out.println(req);
-
-                // Encabezados
-                // while (true) {
-                // String encabezado = entrada.readLine();
-                // System.out.println(encabezado);
-                // if (encabezado.equals(""))
-                // break;
-                // }
 
                 if (req.startsWith("GET /Hola ")) {
                     String contenido = "<html><button onClick='alert(\"Se presiono el boton\")'/></html>";

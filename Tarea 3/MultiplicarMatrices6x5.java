@@ -1,0 +1,264 @@
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class MultiplicarMatrices6x5 {
+
+   static final int N = 6; // Número de filas de la matriz A y columnas de la martiz B
+   static final int M = 5; // Número de columnas de la matriz A y filas de la matriz B
+   static final String IP1 = "40.88.226.110";
+   static final String IP2 = "40.88.227.203";
+   static final int PUERTO = 50000;
+
+   public static void main(String[] args) throws Exception {
+
+      if (args.length != 1) {
+         System.out.println("Por favor, pasa el número de nodo como argumento.");
+         return;
+      }
+
+      int nodo;
+      try {
+         nodo = Integer.parseInt(args[0]);
+      } catch (NumberFormatException e) {
+         System.out.println("El argumento debe ser un número entero.");
+         return;
+      }
+
+      switch (nodo) {
+         case 1:
+            executeNode1();
+            break;
+         case 2:
+         case 3:
+            executeNode2or3(nodo);
+            break;
+         default:
+            System.out.println("Número de nodo no válido. Debe ser 1, 2 o 3.");
+            break;
+      }
+
+   }
+
+   private static void executeNode1() throws Exception {
+
+      double[][] A = initializeMatrixA();
+      double[][] B = initializeMatrixB();
+      System.out.println("Matriz A:");
+      printMatrix(A);
+      System.out.println("Matriz B:");
+      printMatrix(B);
+
+      double[][] BT = transpose(B);
+      double[][][] A_split = split(A);
+
+      try {
+
+         Socket socket2 = new Socket(IP1, PUERTO);
+         Socket socket3 = new Socket(IP2, PUERTO);
+         ObjectOutputStream out2 = new ObjectOutputStream(socket2.getOutputStream());
+         out2.writeObject(A_split[0]);
+         out2.writeObject(A_split[1]);
+         out2.writeObject(A_split[2]);
+         out2.writeObject(BT);
+         out2.flush();
+
+         ObjectOutputStream out3 = new ObjectOutputStream(socket3.getOutputStream());
+         out3.writeObject(A_split[3]);
+         out3.writeObject(A_split[4]);
+         out3.writeObject(A_split[5]);
+         out3.writeObject(BT);
+         out3.flush();
+
+         double[][][] C_partes = new double[6][][];
+
+         ObjectInputStream in2 = new ObjectInputStream(socket2.getInputStream());
+         C_partes[0] = (double[][]) in2.readObject();
+         C_partes[1] = (double[][]) in2.readObject();
+         C_partes[2] = (double[][]) in2.readObject();
+
+         ObjectInputStream in3 = new ObjectInputStream(socket3.getInputStream());
+         C_partes[3] = (double[][]) in3.readObject();
+         C_partes[4] = (double[][]) in3.readObject();
+         C_partes[5] = (double[][]) in3.readObject();
+
+         double[][] C = combine(C_partes);
+         System.out.println("Resultado de la multiplicacion de AxB:");
+         printMatrix(C);
+
+         System.out.println("Checksum: " + calculateChecksum(C));
+
+         in2.close();
+         socket2.close();
+         in3.close();
+         socket3.close();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+   }
+
+   private static void executeNode2or3(int nodeNumber) throws Exception {
+
+      ServerSocket serverSocket = new ServerSocket(PUERTO); 
+      System.out.println("Servidor iniciado en el puerto: " + PUERTO);
+
+      while (true) {
+         Socket socket = serverSocket.accept();
+         new Worker(socket).start();
+      }
+   }
+
+   private static class Worker extends Thread {
+      private Socket socket;
+
+      public Worker(Socket socket) {
+         this.socket = socket;
+      }
+
+      public void run() {
+         try {
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+            double[][] A_part1 = (double[][]) in.readObject();
+            double[][] A_part2 = (double[][]) in.readObject();
+            double[][] A_part3 = (double[][]) in.readObject();
+            double[][] BT = (double[][]) in.readObject();
+
+            System.out.println("Partes enviadas desde el cliente: ");
+            printMatrix(A_part1);
+            printMatrix(A_part2);
+            printMatrix(A_part3);
+
+            System.out.println("Transpuesta de B:");
+            printMatrix(BT);
+
+            double[][] C_part1 = multiply(A_part1, BT);
+            double[][] C_part2 = multiply(A_part2, BT);
+            double[][] C_part3 = multiply(A_part3, BT);
+
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(C_part1);
+            out.writeObject(C_part2);
+            out.writeObject(C_part3);
+            out.flush();
+            System.out.println("------------------- Termino el servidor --------------------");
+
+         } catch (Exception e) {
+            e.setStackTrace(getStackTrace());
+         }
+      }
+   }
+
+   public static double[][] multiply(double[][] A, double[][] BT) {
+      int n = A.length; // Número de filas de la matriz A
+      int m = A[0].length; // Número de columnas de la matriz A
+      int k = BT.length; // Número de filas de la matriz BT
+      // Crear una nueva matriz para almacenar el producto
+      double[][] C = new double[n][k];
+
+      // Multiplicar las matrices renglón por renglón
+      for (int i = 0; i < n; i++) {
+         for (int j = 0; j < k; j++) {
+            for (int l = 0; l < m; l++) {
+               C[i][j] += A[i][l] * BT[j][l];
+            }
+         }
+      }
+
+      return C;
+   }
+
+   public static double[][][] split(double[][] A) {
+      int n = A.length; // Número de filas de la matriz A
+      int m = A[0].length; // Número de columnas de la matriz A
+      // Calculamos el tamaño de cada parte de la matriz dividida
+      int partSize = n / 6;
+      // Dividimos la matriz A en seis partes de igual tamaño
+      double[][][] A_split = new double[6][][];
+      for (int i = 0; i < 6; i++) {
+         A_split[i] = new double[partSize][m];
+      }
+      // Copiamos los datos de la matriz A a las partes divididas
+      int offset = 0;
+      for (int i = 0; i < 6; i++) {
+         for (int j = 0; j < partSize; j++) {
+            System.arraycopy(A[offset], 0, A_split[i][j], 0, m);
+            offset++;
+         }
+      }
+      return A_split;
+   }
+
+   public static double[][] initializeMatrixA() {
+      double[][] A = new double[N][M];
+      for (int i = 0; i < N; i++) {
+         for (int j = 0; j < M; j++) {
+            A[i][j] = 5 * i - 2 * j;
+         }
+      }
+      return A;
+   }
+
+   public static double[][] initializeMatrixB() {
+      double[][] B = new double[M][N];
+      for (int i = 0; i < M; i++) {
+         for (int j = 0; j < N; j++) {
+            B[i][j] = 6 * i + 3 * j;
+         }
+      }
+      return B;
+   }
+
+   public static double[][] transpose(double[][] B) {
+      int rows = B.length;
+      int cols = B[0].length;
+      double[][] Bt = new double[cols][rows];
+
+      for (int i = 0; i < cols; i++) {
+         for (int j = 0; j < rows; j++) {
+            Bt[i][j] = B[j][i];
+         }
+      }
+      return Bt;
+   }
+
+   public static double calculateChecksum(double[][] C) {
+      double checksum = 0.0;
+      for (int i = 0; i < C.length; i++) {
+         for (int j = 0; j < C[0].length; j++) {
+            checksum += C[i][j];
+         }
+      }
+      return checksum;
+   }
+
+   public static double[][] combine(double[][][] C_split) {
+      int partSize = C_split[0].length; // Número de filas de cada parte
+      int m = C_split[0][0].length; // Número de columnas de cada parte
+
+      // Crear una nueva matriz para almacenar la matriz combinada
+      double[][] C = new double[6 * partSize][m];
+
+      // Combinar las partes de la matriz C en la matriz C
+      int offset = 0;
+      for (int i = 0; i < 6; i++) {
+         for (int j = 0; j < partSize; j++) {
+            System.arraycopy(C_split[i][j], 0, C[offset], 0, m);
+            offset++;
+         }
+      }
+
+      return C;
+   }
+
+   public static void printMatrix(double[][] matrix) {
+      for (int i = 0; i < matrix.length; i++) {
+         for (int j = 0; j < matrix[0].length; j++) {
+            System.out.print(matrix[i][j] + " ");
+         }
+         System.out.println(" ");
+      }
+      System.out.println(" ");
+   }
+
+}
